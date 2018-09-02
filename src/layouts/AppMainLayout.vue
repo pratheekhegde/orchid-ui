@@ -22,16 +22,13 @@
         </v-list-tile>
       </v-list>
     </v-navigation-drawer>
-    <v-toolbar app fixed clipped-left>
+    <v-toolbar app fixed dark clipped-left color="blue darken-3">
       <v-toolbar-side-icon @click.stop="drawer = !drawer"></v-toolbar-side-icon>
       <v-toolbar-title>Application XYZ</v-toolbar-title>
     </v-toolbar>
     <v-content>
         <router-view/>
     </v-content>
-    <v-footer app fixed>
-      <span>&copy; 2017</span>
-    </v-footer>
   </v-app>
 </template>
 
