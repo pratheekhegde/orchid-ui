@@ -1,6 +1,16 @@
 import Vue from "vue";
 import Router from "vue-router";
-import Home from "./views/Home.vue";
+
+// Layouts
+import AppMainLayout from "./layouts/AppMainLayout";
+
+// Views
+import Login from "./views/Login.vue";
+import Dashboard from "./views/Dashboard";
+import PublisherList from "./views/Publisher/PublisherList";
+import CampaignList from "./views/Campaign/CampaignList";
+import ContentList from "./views/Content/ContentList";
+import NotFoundView from "./views/NotFoundView";
 
 Vue.use(Router);
 
@@ -9,9 +19,35 @@ export default new Router({
   base: process.env.BASE_URL,
   routes: [
     {
+      path: "/login",
+      name: "login",
+      component: Login
+    },
+    {
       path: "/",
-      name: "home",
-      component: Home
+      component: AppMainLayout,
+      children: [
+        {
+          path: "dashboard",
+          name: "dashboard",
+          component: Dashboard
+        },
+        {
+          path: "publishers",
+          name: "publisher-list",
+          component: PublisherList
+        },
+        {
+          path: "campaigns",
+          name: "campaign-list",
+          component: CampaignList
+        },
+        {
+          path: "contents",
+          name: "content-list",
+          component: ContentList
+        }
+      ]
     },
     {
       path: "/about",
@@ -21,6 +57,11 @@ export default new Router({
       // which is lazy-loaded when the route is visited.
       component: () =>
         import(/* webpackChunkName: "about" */ "./views/About.vue")
+    },
+    {
+      // not found handler
+      path: "*",
+      component: NotFoundView
     }
   ]
 });
