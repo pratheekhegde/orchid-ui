@@ -12,10 +12,13 @@ import {
   VTooltip,
   VCard,
   VForm,
+  VSelect,
+  VCheckbox,
   VTextField,
   VDivider,
   VDataTable,
   VDialog,
+  VChip,
   VTabs,
   transitions
 } from "vuetify";
@@ -39,6 +42,9 @@ Vue.use(Vuetify, {
     VDataTable,
     VDialog,
     VTabs,
+    VSelect,
+    VChip,
+    VCheckbox,
     transitions
   }
 });

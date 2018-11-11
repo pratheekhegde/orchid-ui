@@ -10,6 +10,9 @@
     "test:e2e": "vue-cli-service test:e2e"
   },
   "dependencies": {
+    "axios": "^0.18.0",
+    "date-fns": "^1.29.0",
+    "vee-validate": "^2.1.2",
     "vue": "^2.5.17",
     "vue-router": "^3.0.1",
     "vuetify": "^1.0.19",

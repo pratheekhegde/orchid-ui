@@ -10,6 +10,7 @@ import Dashboard from "./views/Dashboard";
 import PublisherList from "./views/Publisher/PublisherList";
 import CampaignList from "./views/Campaign/CampaignList";
 import ContentList from "./views/Content/ContentList";
+import ContentForm from "./views/Content/ContentForm";
 import NotFoundView from "./views/NotFoundView";
 
 Vue.use(Router);
@@ -46,6 +47,16 @@ export default new Router({
           path: "contents",
           name: "content-list",
           component: ContentList
+        },
+        {
+          path: "contents/new",
+          name: "content-add",
+          component: ContentForm
+        },
+        {
+          path: "contents/:contentId/edit",
+          name: "content-edit",
+          component: ContentForm
         }
       ]
     },
