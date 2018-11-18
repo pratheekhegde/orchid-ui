@@ -7,10 +7,16 @@ import AppMainLayout from "./layouts/AppMainLayout";
 // Views
 import Login from "./views/Login.vue";
 import Dashboard from "./views/Dashboard";
-import PublisherList from "./views/Publisher/PublisherList";
-import CampaignList from "./views/Campaign/CampaignList";
+
+// Content
 import ContentList from "./views/Content/ContentList";
 import ContentForm from "./views/Content/ContentForm";
+
+// Publisher
+import PublisherList from "./views/Publisher/PublisherList";
+import PublisherForm from "./views/Publisher/PublisherForm";
+
+import CampaignList from "./views/Campaign/CampaignList";
 import NotFoundView from "./views/NotFoundView";
 
 Vue.use(Router);
@@ -34,11 +40,6 @@ export default new Router({
           component: Dashboard
         },
         {
-          path: "publishers",
-          name: "publisher-list",
-          component: PublisherList
-        },
-        {
           path: "campaigns",
           name: "campaign-list",
           component: CampaignList
@@ -57,6 +58,21 @@ export default new Router({
           path: "contents/:contentId/edit",
           name: "content-edit",
           component: ContentForm
+        },
+        {
+          path: "publishers",
+          name: "publisher-list",
+          component: PublisherList
+        },
+        {
+          path: "publishers/new",
+          name: "publisher-add",
+          component: PublisherForm
+        },
+        {
+          path: "publishers/:publisherId/edit",
+          name: "publisher-edit",
+          component: PublisherForm
         }
       ]
     },

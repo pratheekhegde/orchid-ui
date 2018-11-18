@@ -33,7 +33,7 @@ export default {
     createMode: true,
     contentName: "",
     selectedContentType: null,
-    isActive: false,
+    isActive: true,
     contentTypes: ["Movie", "Advertisement"],
     dictionary: {
       custom: {
