@@ -28,9 +28,17 @@ const getContentById = async contentId => {
   } else return {};
 };
 
+const deleteContent = async contentId => {
+  const response = await ApiService.delete(`content/${contentId}`);
+  if (response.status === 200) {
+    return true;
+  } else return false;
+};
+
 export default {
   getContents,
   createContent,
   updateContent,
-  getContentById
+  getContentById,
+  deleteContent
 };

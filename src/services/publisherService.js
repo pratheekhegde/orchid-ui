@@ -28,9 +28,17 @@ const getPublisherById = async publisherId => {
   } else return {};
 };
 
+const deletePublisher = async publisherId => {
+  const response = await ApiService.delete(`publisher/${publisherId}`);
+  if (response.status === 200) {
+    return true;
+  } else return false;
+};
+
 export default {
   getPublishers,
   createPublisher,
   updatePublisher,
-  getPublisherById
+  getPublisherById,
+  deletePublisher
 };

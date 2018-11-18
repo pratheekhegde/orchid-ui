@@ -17,15 +17,19 @@
             <template slot="items" slot-scope="props">
               <td>{{ props.item.name }}</td>
               <td>{{ props.item.type }}</td>
-              <td class="text-xs-center" v-if="props.item.isActive"><v-chip color="green" text-color="white">Active</v-chip></td>
-              <td class="text-xs-center" v-else><v-chip color="red" text-color="white">Inactive</v-chip></td>
+              <td class="text-xs-center" v-if="props.item.isActive">
+                <v-chip color="green" text-color="white">Active</v-chip>
+              </td>
+              <td class="text-xs-center" v-else>
+                <v-chip color="red" text-color="white">Inactive</v-chip>
+              </td>
               <td>{{ props.item.updatedAt | fromNow }}</td>
               <td>{{ props.item.createdAt | format }}</td>
               <td class="text-xs-right">
-                <v-icon small class="mr-2" @click="editItem(props.item)">
+                <v-icon small class="mr-2" @click="editContent(props.item)">
                   edit
                 </v-icon>
-                <v-icon small @click="deleteItem(props.item)">
+                <v-icon small @click="showDeleteContentPrompt(props.item)">
                   delete
                 </v-icon>
               </td>
@@ -37,6 +41,19 @@
         </v-card>
       </v-flex>
     </v-layout>
+    <v-layout row justify-center>
+      <v-dialog v-model="showContentDeleteDialog" persistent max-width="290">
+        <v-card>
+          <v-card-title class="headline">Delete Content?</v-card-title>
+          <v-card-text>Are you sure you want to delete the content <b>{{contentToBeDeleted?contentToBeDeleted.name:''}}</b>?</v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="green darken-1" flat @click="showContentDeleteDialog = false">Cancel</v-btn>
+            <v-btn color="red darken-1" flat @click="deleteContent" :loading="isContentDeleting">Delete</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </v-layout>
   </v-container>
 </template>
 <script>
@@ -45,7 +62,10 @@ import ContentService from "@/services/contentService";
 export default {
   data: () => ({
     contentSearchText: "",
+    showContentDeleteDialog: false,
     isContentsLoading: false,
+    isContentDeleting: false,
+    contentToBeDeleted: null,
     headers: [
       {
         text: "Content Name",
@@ -60,17 +80,31 @@ export default {
     ],
     contents: []
   }),
-  async created() {
-    this.isContentsLoading = true;
-    this.contents = await ContentService.getContents();
-    this.isContentsLoading = false;
+  created() {
+    this.fetchAllContents();
   },
   methods: {
-    editItem(item) {
+    async fetchAllContents() {
+      this.isContentsLoading = true;
+      this.contents = await ContentService.getContents();
+      this.isContentsLoading = false;
+    },
+    editContent(item) {
       this.$router.push({
         name: "content-edit",
         params: { contentId: item._id }
       });
+    },
+    showDeleteContentPrompt(item) {
+      this.showContentDeleteDialog = true;
+      this.contentToBeDeleted = item;
+    },
+    async deleteContent() {
+      this.isContentDeleting = true;
+      await ContentService.deleteContent(this.contentToBeDeleted._id);
+      this.isContentDeleting = false;
+      this.fetchAllContents();
+      this.showContentDeleteDialog = false;
     }
   }
 };
