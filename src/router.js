@@ -16,7 +16,10 @@ import ContentForm from "./views/Content/ContentForm";
 import PublisherList from "./views/Publisher/PublisherList";
 import PublisherForm from "./views/Publisher/PublisherForm";
 
+// Campaign
 import CampaignList from "./views/Campaign/CampaignList";
+import CampaignForm from "./views/Campaign/CampaignForm";
+
 import NotFoundView from "./views/NotFoundView";
 
 Vue.use(Router);
@@ -43,6 +46,11 @@ export default new Router({
           path: "campaigns",
           name: "campaign-list",
           component: CampaignList
+        },
+        {
+          path: "campaigns/new",
+          name: "campaign-add",
+          component: CampaignForm
         },
         {
           path: "contents",

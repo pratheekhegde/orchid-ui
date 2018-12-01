@@ -2,7 +2,7 @@
   <v-container fluid>
     <v-layout align-center justify-space-between>
       <h2 class="headline">Contents</h2>
-      <v-btn slot="activator" :to="{ name: 'content-add'}" color="primary" dark>
+      <v-btn :to="{ name: 'content-add'}" color="primary" dark>
         <v-icon left dark>add</v-icon>New
       </v-btn>
     </v-layout>

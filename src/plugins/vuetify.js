@@ -17,6 +17,8 @@ import {
   VTextField,
   VDivider,
   VDataTable,
+  VAutocomplete,
+  VDatePicker,
   VDialog,
   VChip,
   VTabs,
@@ -45,6 +47,8 @@ Vue.use(Vuetify, {
     VSelect,
     VChip,
     VCheckbox,
+    VDatePicker,
+    VAutocomplete,
     transitions
   }
 });

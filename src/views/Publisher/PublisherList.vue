@@ -13,7 +13,7 @@
                         <v-spacer></v-spacer>
                         <v-text-field v-model="publisherSearchText" append-icon="search" label="Search" single-line hide-details></v-text-field>
                     </v-card-title>
-                    <v-data-table :headers="headers" :items="contents" :loading="isPublishersLoading" :search="publisherSearchText">
+                    <v-data-table :headers="headers" :items="publishers" :loading="isPublishersLoading" :search="publisherSearchText">
                         <template slot="items" slot-scope="props">
                             <td>{{ props.item.name }}</td>
                             <td class="text-xs-center" v-if="props.item.isActive">
@@ -77,7 +77,7 @@ export default {
       { text: "Created", value: "createdAt", sortable: false },
       { text: "Actions", value: "name", align: "right", sortable: false }
     ],
-    contents: []
+    publishers: []
   }),
   async created() {
     this.fetchAllPublishers();
@@ -85,7 +85,7 @@ export default {
   methods: {
     async fetchAllPublishers() {
       this.isPublishersLoading = true;
-      this.contents = await PublisherService.getPublishers();
+      this.publishers = await PublisherService.getPublishers();
       this.isPublishersLoading = false;
     },
     editPublisher(item) {

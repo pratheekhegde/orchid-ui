@@ -2,7 +2,7 @@
  <v-container fluid>
    <v-layout align-center justify-space-between row>
     <h2 class="headline">Campaigns</h2>
-      <v-btn slot="activator" color="primary" dark class="mb-2">New Campaign<v-icon right dark>add</v-icon>
+      <v-btn :to="{ name: 'campaign-add'}" color="primary" dark class="mb-2">New Campaign<v-icon right dark>add</v-icon>
         </v-btn>
    </v-layout>
     <br>
