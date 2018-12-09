@@ -53,6 +53,11 @@ export default new Router({
           component: CampaignForm
         },
         {
+          path: "campaigns/:campaignId/edit",
+          name: "campaign-edit",
+          component: CampaignForm
+        },
+        {
           path: "contents",
           name: "content-list",
           component: ContentList

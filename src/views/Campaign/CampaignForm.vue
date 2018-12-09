@@ -92,6 +92,8 @@ export default {
       );
       this.campaignName = campaign.name;
       this.isActive = campaign.isActive;
+      this.contentId = campaign.content;
+      this.publisherIds = campaign.publishers.map(p => p._id);
     }
   },
   mounted() {
@@ -126,8 +128,12 @@ export default {
       });
     },
     clear() {
-      this.campaignName = "";
-      this.isActive = false;
+      this.campaignName = null;
+      this.contentId = null;
+      this.publisherIds = [];
+      this.campaignStartDate = null;
+      this.campaignEndDate = null;
+      this.isActive = true;
       this.$validator.reset();
     }
   }

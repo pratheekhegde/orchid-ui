@@ -1,199 +1,115 @@
 <template>
- <v-container fluid>
-   <v-layout align-center justify-space-between row>
-    <h2 class="headline">Campaigns</h2>
-      <v-btn :to="{ name: 'campaign-add'}" color="primary" dark class="mb-2">New Campaign<v-icon right dark>add</v-icon>
-        </v-btn>
-   </v-layout>
-    <br>
-    <v-data-table
-      :headers="headers"
-      :items="desserts"
-      hide-actions
-      class="elevation-1"
-    >
-      <template slot="items" slot-scope="props">
-        <td>{{ props.item.name }}</td>
-        <td class="text-xs-right">{{ props.item.calories }}</td>
-        <td class="text-xs-right">{{ props.item.fat }}</td>
-        <td class="text-xs-right">{{ props.item.carbs }}</td>
-        <td class="text-xs-right">{{ props.item.protein }}</td>
-        <td class="justify-center layout px-0">
-          <v-icon
-            small
-            class="mr-2"
-            @click="editItem(props.item)"
-          >
-            edit
-          </v-icon>
-          <v-icon
-            small
-            @click="deleteItem(props.item)"
-          >
-            delete
-          </v-icon>
-        </td>
-      </template>
-      <template slot="no-data">
-        <v-btn color="primary" @click="initialize">Reset</v-btn>
-      </template>
-    </v-data-table>
- </v-container>
+  <v-container fluid>
+    <v-layout align-center justify-space-between>
+      <h2 class="headline">Campaigns</h2>
+      <v-btn :to="{ name: 'campaign-add'}" color="primary" dark>
+        <v-icon left dark>add</v-icon>New
+      </v-btn>
+    </v-layout>
+    <v-layout mt-3>
+      <v-flex>
+        <v-card>
+          <v-card-title>
+            <v-spacer></v-spacer>
+            <v-text-field v-model="campaignSearchText" append-icon="search" label="Search" single-line hide-details></v-text-field>
+          </v-card-title>
+          <v-data-table :headers="headers" :items="contents" :loading="isCampaignsLoading" :search="campaignSearchText">
+            <template slot="items" slot-scope="props">
+              <td>{{ props.item.name }}</td>
+              <td>{{ props.item.content.name }}</td>
+              <td class="text-xs-center" v-if="props.item.isActive">
+                <v-chip color="green" text-color="white">Active</v-chip>
+              </td>
+              <td class="text-xs-center" v-else>
+                <v-chip color="red" text-color="white">Inactive</v-chip>
+              </td>
+              <td>{{ props.item.updatedAt | fromNow }}</td>
+              <td>{{ props.item.createdAt | format }}</td>
+              <td class="text-xs-right">
+                <v-icon small class="mr-2" @click="editCampaign(props.item)">
+                  edit
+                </v-icon>
+                <v-icon small @click="showDeleteCampaignPrompt(props.item)">
+                  delete
+                </v-icon>
+              </td>
+            </template>
+            <template slot="no-data">
+              <span class="justify-center">There is nothing to display.</span>
+            </template>
+          </v-data-table>
+        </v-card>
+      </v-flex>
+    </v-layout>
+    <v-layout row justify-center>
+      <v-dialog v-model="showCampaignDeleteDialog" persistent max-width="290">
+        <v-card>
+          <v-card-title class="headline">Delete Campaign?</v-card-title>
+          <v-card-text>Are you sure you want to delete the campaign <b>{{campaignToBeDeleted?campaignToBeDeleted.name:''}}</b>?</v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="green darken-1" flat @click="showCampaignDeleteDialog = false">Cancel</v-btn>
+            <v-btn color="red darken-1" flat @click="deleteCampaign" :loading="isCampaignDeleting">Delete</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </v-layout>
+  </v-container>
 </template>
 <script>
+import CampaignService from "@/services/campaignService";
+
 export default {
   data: () => ({
-    dialog: false,
+    campaignSearchText: "",
+    showCampaignDeleteDialog: false,
+    isCampaignsLoading: false,
+    isCampaignDeleting: false,
+    campaignToBeDeleted: null,
     headers: [
       {
-        text: "Dessert (100g serving)",
+        text: "Campaign Name",
         align: "left",
-        sortable: false,
         value: "name"
       },
-      { text: "Calories", value: "calories" },
-      { text: "Fat (g)", value: "fat" },
-      { text: "Carbs (g)", value: "carbs" },
-      { text: "Protein (g)", value: "protein" },
-      { text: "Actions", value: "name", sortable: false }
+      {
+        text: "Content Name",
+        value: "content",
+        align: "center",
+        sortable: false
+      },
+      { text: "Status", value: "isActive", align: "center", sortable: false },
+      { text: "Last Updated", value: "updatedAt", sortable: false },
+      { text: "Created", value: "createdAt", sortable: false },
+      { text: "Actions", value: "name", align: "right", sortable: false }
     ],
-    desserts: [],
-    editedIndex: -1,
-    editedItem: {
-      name: "",
-      calories: 0,
-      fat: 0,
-      carbs: 0,
-      protein: 0
-    },
-    defaultItem: {
-      name: "",
-      calories: 0,
-      fat: 0,
-      carbs: 0,
-      protein: 0
-    }
+    contents: []
   }),
-
-  computed: {
-    formTitle() {
-      return this.editedIndex === -1 ? "New Item" : "Edit Item";
-    }
-  },
-
-  watch: {
-    dialog(val) {
-      val || this.close();
-    }
-  },
-
   created() {
-    this.initialize();
+    this.fetchAllCampaigns();
   },
-
   methods: {
-    initialize() {
-      this.desserts = [
-        {
-          name: "Frozen Yogurt",
-          calories: 159,
-          fat: 6.0,
-          carbs: 24,
-          protein: 4.0
-        },
-        {
-          name: "Ice cream sandwich",
-          calories: 237,
-          fat: 9.0,
-          carbs: 37,
-          protein: 4.3
-        },
-        {
-          name: "Eclair",
-          calories: 262,
-          fat: 16.0,
-          carbs: 23,
-          protein: 6.0
-        },
-        {
-          name: "Cupcake",
-          calories: 305,
-          fat: 3.7,
-          carbs: 67,
-          protein: 4.3
-        },
-        {
-          name: "Gingerbread",
-          calories: 356,
-          fat: 16.0,
-          carbs: 49,
-          protein: 3.9
-        },
-        {
-          name: "Jelly bean",
-          calories: 375,
-          fat: 0.0,
-          carbs: 94,
-          protein: 0.0
-        },
-        {
-          name: "Lollipop",
-          calories: 392,
-          fat: 0.2,
-          carbs: 98,
-          protein: 0
-        },
-        {
-          name: "Honeycomb",
-          calories: 408,
-          fat: 3.2,
-          carbs: 87,
-          protein: 6.5
-        },
-        {
-          name: "Donut",
-          calories: 452,
-          fat: 25.0,
-          carbs: 51,
-          protein: 4.9
-        },
-        {
-          name: "KitKat",
-          calories: 518,
-          fat: 26.0,
-          carbs: 65,
-          protein: 7
-        }
-      ];
+    async fetchAllCampaigns() {
+      this.isCampaignsLoading = true;
+      this.contents = await CampaignService.getCampaigns();
+      this.isCampaignsLoading = false;
     },
-
-    editItem(item) {
-      this.editedIndex = this.desserts.indexOf(item);
-      this.editedItem = Object.assign({}, item);
-      this.dialog = true;
+    editCampaign(item) {
+      this.$router.push({
+        name: "campaign-edit",
+        params: { campaignId: item._id }
+      });
     },
-
-    deleteItem(item) {
-      const index = this.desserts.indexOf(item);
-      confirm("Are you sure you want to delete this item?") &&
-        this.desserts.splice(index, 1);
+    showDeleteCampaignPrompt(item) {
+      this.showCampaignDeleteDialog = true;
+      this.campaignToBeDeleted = item;
     },
-
-    close() {
-      this.dialog = false;
-      setTimeout(() => {
-        this.editedItem = Object.assign({}, this.defaultItem);
-        this.editedIndex = -1;
-      }, 300);
-    },
-
-    save() {
-      if (this.editedIndex > -1) {
-        Object.assign(this.desserts[this.editedIndex], this.editedItem);
-      } else {
-        this.desserts.push(this.editedItem);
-      }
-      this.close();
+    async deleteCampaign() {
+      this.isCampaignDeleting = true;
+      await CampaignService.deleteCampaign(this.campaignToBeDeleted._id);
+      this.isCampaignDeleting = false;
+      this.fetchAllCampaigns();
+      this.showCampaignDeleteDialog = false;
     }
   }
 };
