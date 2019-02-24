@@ -1,17 +1,12 @@
 <template>
   <v-app id="inspire">
-    <v-navigation-drawer
-      v-model="drawer"
-      clipped
-      fixed
-      app
-    >
+    <v-navigation-drawer v-model="drawer" clipped fixed app>
       <v-list>
         <v-list-tile
           value="true"
           v-for="(item, i) in sideMenuItems"
           :key="i"
-          @click="$router.push({name: item.routeName})"
+          @click="$router.push({ name: item.routeName })"
         >
           <v-list-tile-action>
             <v-icon v-html="item.icon"></v-icon>
@@ -27,7 +22,7 @@
       <v-toolbar-title>Application XYZ</v-toolbar-title>
     </v-toolbar>
     <v-content>
-        <router-view/>
+      <router-view />
     </v-content>
   </v-app>
 </template>
