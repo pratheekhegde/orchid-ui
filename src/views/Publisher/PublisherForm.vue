@@ -1,8 +1,15 @@
 <template>
   <v-container fluid>
     <v-layout align-center justify-space-between>
-      <h2 class="headline">{{createMode?'New Publisher':'Edit Publisher'}}</h2>
-      <v-btn slot="activator" :to="{ name: 'publisher-list'}" color="primary" dark>
+      <h2 class="headline">
+        {{ createMode ? "New Publisher" : "Edit Publisher" }}
+      </h2>
+      <v-btn
+        slot="activator"
+        :to="{ name: 'publisher-list' }"
+        color="primary"
+        dark
+      >
         <v-icon left dark>arrow_back</v-icon> Back
       </v-btn>
     </v-layout>
@@ -12,9 +19,26 @@
           <v-card-title>
             <v-flex>
               <form>
-                <v-text-field v-validate="'required|max:100'" v-model="publisherName" :counter="100" :error-messages="errors.collect('publisherName')" label="Publisher Name" data-vv-name="publisherName" required></v-text-field>
-                <v-checkbox v-validate="'required'" v-model="isActive" :error-messages="errors.collect('isActive')" label="Active" data-vv-name="isActive" required></v-checkbox>
-                <v-btn @click="submit" :loading="isSubmitting" color="success">submit</v-btn>
+                <v-text-field
+                  v-validate="'required|max:100'"
+                  v-model="publisherName"
+                  :counter="100"
+                  :error-messages="errors.collect('publisherName')"
+                  label="Publisher Name"
+                  data-vv-name="publisherName"
+                  required
+                ></v-text-field>
+                <v-checkbox
+                  v-validate="'required'"
+                  v-model="isActive"
+                  :error-messages="errors.collect('isActive')"
+                  label="Active"
+                  data-vv-name="isActive"
+                  required
+                ></v-checkbox>
+                <v-btn @click="submit" :loading="isSubmitting" color="success"
+                  >submit</v-btn
+                >
                 <v-btn @click="clear">clear</v-btn>
               </form>
             </v-flex>
@@ -25,7 +49,8 @@
   </v-container>
 </template>
 <script>
-import PublisherService from "@/services/publisherService";
+import AppService from "@/services/appService";
+
 export default {
   data: () => ({
     isSubmitting: false,
@@ -45,7 +70,8 @@ export default {
   async created() {
     this.createMode = Object.keys(this.$route.params).length === 0; // if there is no router param publisherId then its in create mode
     if (!this.createMode) {
-      const publisher = await PublisherService.getPublisherById(
+      const publisher = await AppService.getOne(
+        "publisher",
         this.$route.params.publisherId
       );
       this.publisherName = publisher.name;
@@ -67,9 +93,10 @@ export default {
           };
           // create new publisher
           if (this.createMode) {
-            await PublisherService.createPublisher(payload);
+            await AppService.create("publisher", payload);
           } else {
-            await PublisherService.updatePublisher(
+            await AppService.update(
+              "publisher",
               this.$route.params.publisherId,
               payload
             );

@@ -1,8 +1,15 @@
 <template>
   <v-container fluid>
     <v-layout align-center justify-space-between>
-      <h2 class="headline">{{createMode?'New Content':'Edit Content'}}</h2>
-      <v-btn slot="activator" :to="{ name: 'content-list'}" color="primary" dark>
+      <h2 class="headline">
+        {{ createMode ? "New Content" : "Edit Content" }}
+      </h2>
+      <v-btn
+        slot="activator"
+        :to="{ name: 'content-list' }"
+        color="primary"
+        dark
+      >
         <v-icon left dark>arrow_back</v-icon> Back
       </v-btn>
     </v-layout>
@@ -12,10 +19,35 @@
           <v-card-title>
             <v-flex>
               <form>
-                <v-text-field v-validate="'required|max:100'" v-model="contentName" :counter="100" :error-messages="errors.collect('contentName')" label="Content Name" data-vv-name="contentName" required></v-text-field>
-                <v-select v-validate="'required'" :items="contentTypes" v-model="selectedContentType" :error-messages="errors.collect('selectedContentType')" label="Content Type" data-vv-name="selectedContentType" required></v-select>
-                <v-checkbox v-validate="'required'" v-model="isActive" :error-messages="errors.collect('isActive')" label="Active" data-vv-name="isActive" required></v-checkbox>
-                <v-btn @click="submit" :loading="isSubmitting" color="success">submit</v-btn>
+                <v-text-field
+                  v-validate="'required|max:100'"
+                  v-model="contentName"
+                  :counter="100"
+                  :error-messages="errors.collect('contentName')"
+                  label="Content Name"
+                  data-vv-name="contentName"
+                  required
+                ></v-text-field>
+                <v-select
+                  v-validate="'required'"
+                  :items="contentTypes"
+                  v-model="selectedContentType"
+                  :error-messages="errors.collect('selectedContentType')"
+                  label="Content Type"
+                  data-vv-name="selectedContentType"
+                  required
+                ></v-select>
+                <v-checkbox
+                  v-validate="'required'"
+                  v-model="isActive"
+                  :error-messages="errors.collect('isActive')"
+                  label="Active"
+                  data-vv-name="isActive"
+                  required
+                ></v-checkbox>
+                <v-btn @click="submit" :loading="isSubmitting" color="success"
+                  >submit</v-btn
+                >
                 <v-btn @click="clear">clear</v-btn>
               </form>
             </v-flex>
@@ -26,7 +58,8 @@
   </v-container>
 </template>
 <script>
-import ContentService from "@/services/contentService";
+import AppService from "@/services/appService";
+
 export default {
   data: () => ({
     isSubmitting: false,
@@ -51,7 +84,8 @@ export default {
   async created() {
     this.createMode = Object.keys(this.$route.params).length === 0; // if there is no router param contentId then its in create mode
     if (!this.createMode) {
-      const content = await ContentService.getContentById(
+      const content = await AppService.getOne(
+        "content",
         this.$route.params.contentId
       );
       this.contentName = content.name;
@@ -75,9 +109,10 @@ export default {
           };
           // create new content
           if (this.createMode) {
-            await ContentService.createContent(payload);
+            await AppService.create("content", payload);
           } else {
-            await ContentService.updateContent(
+            await AppService.update(
+              "content",
               this.$route.params.contentId,
               payload
             );

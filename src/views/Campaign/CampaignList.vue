@@ -2,7 +2,7 @@
   <v-container fluid>
     <v-layout align-center justify-space-between>
       <h2 class="headline">Campaigns</h2>
-      <v-btn :to="{ name: 'campaign-add'}" color="primary" dark>
+      <v-btn :to="{ name: 'campaign-add' }" color="primary" dark>
         <v-icon left dark>add</v-icon>New
       </v-btn>
     </v-layout>
@@ -11,9 +11,20 @@
         <v-card>
           <v-card-title>
             <v-spacer></v-spacer>
-            <v-text-field v-model="campaignSearchText" append-icon="search" label="Search" single-line hide-details></v-text-field>
+            <v-text-field
+              v-model="campaignSearchText"
+              append-icon="search"
+              label="Search"
+              single-line
+              hide-details
+            ></v-text-field>
           </v-card-title>
-          <v-data-table :headers="headers" :items="contents" :loading="isCampaignsLoading" :search="campaignSearchText">
+          <v-data-table
+            :headers="headers"
+            :items="contents"
+            :loading="isCampaignsLoading"
+            :search="campaignSearchText"
+          >
             <template slot="items" slot-scope="props">
               <td>{{ props.item.name }}</td>
               <td>{{ props.item.content.name }}</td>
@@ -45,11 +56,26 @@
       <v-dialog v-model="showCampaignDeleteDialog" persistent max-width="290">
         <v-card>
           <v-card-title class="headline">Delete Campaign?</v-card-title>
-          <v-card-text>Are you sure you want to delete the campaign <b>{{campaignToBeDeleted?campaignToBeDeleted.name:''}}</b>?</v-card-text>
+          <v-card-text
+            >Are you sure you want to delete the campaign
+            <b>{{ campaignToBeDeleted ? campaignToBeDeleted.name : "" }}</b
+            >?</v-card-text
+          >
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn color="green darken-1" flat @click="showCampaignDeleteDialog = false">Cancel</v-btn>
-            <v-btn color="red darken-1" flat @click="deleteCampaign" :loading="isCampaignDeleting">Delete</v-btn>
+            <v-btn
+              color="green darken-1"
+              flat
+              @click="showCampaignDeleteDialog = false"
+              >Cancel</v-btn
+            >
+            <v-btn
+              color="red darken-1"
+              flat
+              @click="deleteCampaign"
+              :loading="isCampaignDeleting"
+              >Delete</v-btn
+            >
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -57,7 +83,7 @@
   </v-container>
 </template>
 <script>
-import CampaignService from "@/services/campaignService";
+import AppService from "@/services/appService";
 
 export default {
   data: () => ({
@@ -91,7 +117,7 @@ export default {
   methods: {
     async fetchAllCampaigns() {
       this.isCampaignsLoading = true;
-      this.contents = await CampaignService.getCampaigns();
+      this.contents = await AppService.get("campaign");
       this.isCampaignsLoading = false;
     },
     editCampaign(item) {
@@ -106,7 +132,7 @@ export default {
     },
     async deleteCampaign() {
       this.isCampaignDeleting = true;
-      await CampaignService.deleteCampaign(this.campaignToBeDeleted._id);
+      await AppService.delete("campaign", this.campaignToBeDeleted._id);
       this.isCampaignDeleting = false;
       this.fetchAllCampaigns();
       this.showCampaignDeleteDialog = false;

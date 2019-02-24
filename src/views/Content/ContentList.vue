@@ -2,7 +2,7 @@
   <v-container fluid>
     <v-layout align-center justify-space-between>
       <h2 class="headline">Contents</h2>
-      <v-btn :to="{ name: 'content-add'}" color="primary" dark>
+      <v-btn :to="{ name: 'content-add' }" color="primary" dark>
         <v-icon left dark>add</v-icon>New
       </v-btn>
     </v-layout>
@@ -11,9 +11,20 @@
         <v-card>
           <v-card-title>
             <v-spacer></v-spacer>
-            <v-text-field v-model="contentSearchText" append-icon="search" label="Search" single-line hide-details></v-text-field>
+            <v-text-field
+              v-model="contentSearchText"
+              append-icon="search"
+              label="Search"
+              single-line
+              hide-details
+            ></v-text-field>
           </v-card-title>
-          <v-data-table :headers="headers" :items="contents" :loading="isContentsLoading" :search="contentSearchText">
+          <v-data-table
+            :headers="headers"
+            :items="contents"
+            :loading="isContentsLoading"
+            :search="contentSearchText"
+          >
             <template slot="items" slot-scope="props">
               <td>{{ props.item.name }}</td>
               <td>{{ props.item.type }}</td>
@@ -45,11 +56,26 @@
       <v-dialog v-model="showContentDeleteDialog" persistent max-width="290">
         <v-card>
           <v-card-title class="headline">Delete Content?</v-card-title>
-          <v-card-text>Are you sure you want to delete the content <b>{{contentToBeDeleted?contentToBeDeleted.name:''}}</b>?</v-card-text>
+          <v-card-text
+            >Are you sure you want to delete the content
+            <b>{{ contentToBeDeleted ? contentToBeDeleted.name : "" }}</b
+            >?</v-card-text
+          >
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn color="green darken-1" flat @click="showContentDeleteDialog = false">Cancel</v-btn>
-            <v-btn color="red darken-1" flat @click="deleteContent" :loading="isContentDeleting">Delete</v-btn>
+            <v-btn
+              color="green darken-1"
+              flat
+              @click="showContentDeleteDialog = false"
+              >Cancel</v-btn
+            >
+            <v-btn
+              color="red darken-1"
+              flat
+              @click="deleteContent"
+              :loading="isContentDeleting"
+              >Delete</v-btn
+            >
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -57,7 +83,7 @@
   </v-container>
 </template>
 <script>
-import ContentService from "@/services/contentService";
+import AppService from "@/services/appService";
 
 export default {
   data: () => ({
@@ -86,7 +112,7 @@ export default {
   methods: {
     async fetchAllContents() {
       this.isContentsLoading = true;
-      this.contents = await ContentService.getContents();
+      this.contents = await AppService.get("content");
       this.isContentsLoading = false;
     },
     editContent(item) {
@@ -101,7 +127,7 @@ export default {
     },
     async deleteContent() {
       this.isContentDeleting = true;
-      await ContentService.deleteContent(this.contentToBeDeleted._id);
+      await AppService.delete("content", this.contentToBeDeleted._id);
       this.isContentDeleting = false;
       this.fetchAllContents();
       this.showContentDeleteDialog = false;
