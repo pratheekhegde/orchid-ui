@@ -1,0 +1,7 @@
+#import "./ContentFragment.gql"
+
+query GetContentById ($id: ID!){
+  content(id: $id) {
+    ...Content
+  }
+}

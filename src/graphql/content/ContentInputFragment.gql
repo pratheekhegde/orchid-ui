@@ -1,0 +1,5 @@
+fragment ContentInput on Content {
+  name
+  type
+  isActive
+}

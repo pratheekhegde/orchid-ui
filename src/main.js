@@ -7,6 +7,7 @@ import store from "./store";
 
 import VeeValidate from "vee-validate";
 import { format, distanceInWordsToNow } from "date-fns";
+import { createProvider } from "./vue-apollo";
 
 Vue.config.productionTip = false;
 Vue.use(VeeValidate);
@@ -26,5 +27,6 @@ Vue.filter("format", function(value) {
 new Vue({
   router,
   store,
+  apolloProvider: createProvider(),
   render: h => h(App)
 }).$mount("#app");

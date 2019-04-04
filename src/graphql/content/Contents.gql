@@ -1,0 +1,6 @@
+#import "./ContentFragment.gql"
+query AllContents {
+	contents {
+	  ...Content
+	}
+}

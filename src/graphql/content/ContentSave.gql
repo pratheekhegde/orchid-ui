@@ -1,0 +1,7 @@
+#import "./ContentInputFragment.gql"
+
+mutation ContentSave ($input: CreateContentInput!) {
+  createContent (input: $input) {
+    ...ContentInput
+  }
+}

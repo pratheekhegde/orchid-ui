@@ -1,0 +1,6 @@
+fragment Content on Content {
+  id
+  name
+  type
+  isActive
+}

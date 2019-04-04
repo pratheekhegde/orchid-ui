@@ -1,27 +1,20 @@
 <template>
   <v-container fluid>
     <v-layout align-center justify-space-between>
-      <h2 class="headline">
-        {{ createMode ? "New Content" : "Edit Content" }}
-      </h2>
-      <v-btn
-        slot="activator"
-        :to="{ name: 'content-list' }"
-        color="primary"
-        dark
-      >
-        <v-icon left dark>arrow_back</v-icon> Back
+      <h2 class="headline">{{ contentId ? "Edit Content" : "New Content" }}</h2>
+      <v-btn slot="activator" :to="{ name: 'content-list' }" color="primary" dark>
+        <v-icon left dark>arrow_back</v-icon>Back
       </v-btn>
     </v-layout>
     <v-layout mt-3>
       <v-flex>
-        <v-card>
+        <v-card v-if="!$apollo.queries.content.loading">
           <v-card-title>
             <v-flex>
               <form>
                 <v-text-field
                   v-validate="'required|max:100'"
-                  v-model="contentName"
+                  v-model="content.name"
                   :counter="100"
                   :error-messages="errors.collect('contentName')"
                   label="Content Name"
@@ -31,7 +24,7 @@
                 <v-select
                   v-validate="'required'"
                   :items="contentTypes"
-                  v-model="selectedContentType"
+                  v-model="content.type"
                   :error-messages="errors.collect('selectedContentType')"
                   label="Content Type"
                   data-vv-name="selectedContentType"
@@ -39,15 +32,13 @@
                 ></v-select>
                 <v-checkbox
                   v-validate="'required'"
-                  v-model="isActive"
+                  v-model="content.isActive"
                   :error-messages="errors.collect('isActive')"
                   label="Active"
                   data-vv-name="isActive"
                   required
                 ></v-checkbox>
-                <v-btn @click="submit" :loading="isSubmitting" color="success"
-                  >submit</v-btn
-                >
+                <v-btn @click="submit" :loading="isSubmitting" color="success">submit</v-btn>
                 <v-btn @click="clear">clear</v-btn>
               </form>
             </v-flex>
@@ -58,15 +49,18 @@
   </v-container>
 </template>
 <script>
-import AppService from "@/services/appService";
+import Vue from "vue";
+import GET_CONTENT from "@/graphql/content/Content.gql";
+import SAVE_CONTENT from "@/graphql/content/ContentSave.gql";
+import UPDATE_CONTENT from "@/graphql/content/ContentUpdate.gql";
 
 export default {
+  props: {
+    contentId: String
+  },
   data: () => ({
+    content: {},
     isSubmitting: false,
-    createMode: true,
-    contentName: "",
-    selectedContentType: null,
-    isActive: true,
     contentTypes: ["Movie", "Advertisement"],
     dictionary: {
       custom: {
@@ -81,16 +75,17 @@ export default {
       }
     }
   }),
-  async created() {
-    this.createMode = Object.keys(this.$route.params).length === 0; // if there is no router param contentId then its in create mode
-    if (!this.createMode) {
-      const content = await AppService.getOne(
-        "content",
-        this.$route.params.contentId
-      );
-      this.contentName = content.name;
-      this.selectedContentType = content.type;
-      this.isActive = content.isActive;
+  apollo: {
+    content: {
+      query: GET_CONTENT,
+      variables() {
+        return {
+          id: this.contentId
+        };
+      },
+      skip() {
+        return !this.contentId;
+      }
     }
   },
   mounted() {
@@ -102,20 +97,27 @@ export default {
       this.$validator.validate().then(async result => {
         if (result) {
           this.isSubmitting = true;
-          const payload = {
-            name: this.contentName,
-            type: this.selectedContentType,
-            isActive: this.isActive
-          };
-          // create new content
-          if (this.createMode) {
-            await AppService.create("content", payload);
+          // update existing content
+          if (this.contentId) {
+            Vue.delete(this.content, "id");
+            Vue.delete(this.content, "__typename"); // TODO: dont send apollo query object directly
+            await this.$apollo.mutate({
+              mutation: UPDATE_CONTENT,
+              // Payload
+              variables: {
+                id: this.contentId,
+                input: this.content
+              }
+            });
           } else {
-            await AppService.update(
-              "content",
-              this.$route.params.contentId,
-              payload
-            );
+            // create new content
+            await this.$apollo.mutate({
+              mutation: SAVE_CONTENT,
+              // Payload
+              variables: {
+                input: this.content
+              }
+            });
           }
           this.isSubmitting = false;
           this.$router.push({ name: "content-list" });
@@ -123,9 +125,7 @@ export default {
       });
     },
     clear() {
-      this.contentName = "";
-      this.selectedContentType = null;
-      this.isActive = false;
+      this.content = {};
       this.$validator.reset();
     }
   }

@@ -1,0 +1,3 @@
+mutation ContentDelete($id: ID!) {
+  deleteContent (id: $id)
+}

@@ -70,7 +70,8 @@ export default new Router({
         {
           path: "contents/:contentId/edit",
           name: "content-edit",
-          component: ContentForm
+          component: ContentForm,
+          props: true
         },
         {
           path: "publishers",

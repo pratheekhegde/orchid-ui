@@ -1,0 +1,7 @@
+#import "./ContentInputFragment.gql"
+
+mutation ContentUpdate ($id: ID!, $input: UpdateContentInput!) {
+  updateContent (id: $id, input: $input) {
+   ...ContentInput
+  }
+}
