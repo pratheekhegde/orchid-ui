@@ -22,7 +22,6 @@
           <ApolloQuery
             :query="require('@/graphql/content/Contents.gql')"
             fetch-policy="network-only"
-            deep
           >
             <template slot-scope="{ result: { data, loading } }">
               <v-data-table

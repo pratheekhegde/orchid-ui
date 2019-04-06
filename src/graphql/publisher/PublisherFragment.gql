@@ -1,7 +1,6 @@
-fragment Content on Content {
+fragment Publisher on Publisher {
   id
   name
-  type
   isActive
   createdAt
   updatedAt

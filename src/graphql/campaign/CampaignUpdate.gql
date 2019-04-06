@@ -1,0 +1,6 @@
+#import "./CampaignInputFragment.gql"
+mutation CampaignUpdate ($id: ID!, $input: UpdateCampaignInput!) {
+  updateCampaign (id: $id, input: $input) {
+   ...CampaignInput
+  }
+}

@@ -1,0 +1,6 @@
+#import "./PublisherFragment.gql"
+query AllPublishers {
+	publishers {
+	  ...Publisher
+	}
+}

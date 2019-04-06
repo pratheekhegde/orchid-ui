@@ -1,0 +1,4 @@
+fragment PublisherInput on Publisher {
+  name
+  isActive
+}

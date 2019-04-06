@@ -1,0 +1,7 @@
+#import "./PublisherFragment.gql"
+
+query GetPublisherById ($id: ID!){
+  publisher(id: $id) {
+    ...Publisher
+  }
+}

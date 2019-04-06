@@ -1,0 +1,6 @@
+#import "./CampaignFragment.gql"
+query AllCampaigns {
+	campaigns {
+	  ...Campaign
+	}
+}

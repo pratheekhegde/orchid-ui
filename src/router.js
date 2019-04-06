@@ -55,7 +55,8 @@ export default new Router({
         {
           path: "campaigns/:campaignId/edit",
           name: "campaign-edit",
-          component: CampaignForm
+          component: CampaignForm,
+          props: true
         },
         {
           path: "contents",
@@ -86,7 +87,8 @@ export default new Router({
         {
           path: "publishers/:publisherId/edit",
           name: "publisher-edit",
-          component: PublisherForm
+          component: PublisherForm,
+          props: true
         }
       ]
     },

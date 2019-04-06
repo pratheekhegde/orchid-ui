@@ -1,27 +1,20 @@
 <template>
   <v-container fluid>
     <v-layout align-center justify-space-between>
-      <h2 class="headline">
-        {{ createMode ? "New Publisher" : "Edit Publisher" }}
-      </h2>
-      <v-btn
-        slot="activator"
-        :to="{ name: 'publisher-list' }"
-        color="primary"
-        dark
-      >
-        <v-icon left dark>arrow_back</v-icon> Back
+      <h2 class="headline">{{ publisherId ? "Edit Publisher" : "New Publisher" }}</h2>
+      <v-btn slot="activator" :to="{ name: 'publisher-list' }" color="primary" dark>
+        <v-icon left dark>arrow_back</v-icon>Back
       </v-btn>
     </v-layout>
     <v-layout mt-3>
       <v-flex>
-        <v-card>
+        <v-card v-if="!$apollo.queries.publisher.loading">
           <v-card-title>
             <v-flex>
               <form>
                 <v-text-field
                   v-validate="'required|max:100'"
-                  v-model="publisherName"
+                  v-model="publisher.name"
                   :counter="100"
                   :error-messages="errors.collect('publisherName')"
                   label="Publisher Name"
@@ -30,15 +23,13 @@
                 ></v-text-field>
                 <v-checkbox
                   v-validate="'required'"
-                  v-model="isActive"
+                  v-model="publisher.isActive"
                   :error-messages="errors.collect('isActive')"
                   label="Active"
                   data-vv-name="isActive"
                   required
                 ></v-checkbox>
-                <v-btn @click="submit" :loading="isSubmitting" color="success"
-                  >submit</v-btn
-                >
+                <v-btn @click="submit" :loading="isSubmitting" color="success">submit</v-btn>
                 <v-btn @click="clear">clear</v-btn>
               </form>
             </v-flex>
@@ -49,14 +40,18 @@
   </v-container>
 </template>
 <script>
-import AppService from "@/services/appService";
+import Vue from "vue";
+import GET_PUBLISHER from "@/graphql/publisher/Publisher.gql";
+import SAVE_PUBLISHER from "@/graphql/publisher/PublisherSave.gql";
+import UPDATE_PUBLISHER from "@/graphql/publisher/PublisherUpdate.gql";
 
 export default {
+  props: {
+    publisherId: String
+  },
   data: () => ({
+    publisher: {},
     isSubmitting: false,
-    createMode: true,
-    publisherName: "",
-    isActive: true,
     dictionary: {
       custom: {
         publisherName: {
@@ -67,15 +62,17 @@ export default {
       }
     }
   }),
-  async created() {
-    this.createMode = Object.keys(this.$route.params).length === 0; // if there is no router param publisherId then its in create mode
-    if (!this.createMode) {
-      const publisher = await AppService.getOne(
-        "publisher",
-        this.$route.params.publisherId
-      );
-      this.publisherName = publisher.name;
-      this.isActive = publisher.isActive;
+  apollo: {
+    publisher: {
+      query: GET_PUBLISHER,
+      variables() {
+        return {
+          id: this.publisherId
+        };
+      },
+      skip() {
+        return !this.publisherId;
+      }
     }
   },
   mounted() {
@@ -87,19 +84,29 @@ export default {
       this.$validator.validate().then(async result => {
         if (result) {
           this.isSubmitting = true;
-          const payload = {
-            name: this.publisherName,
-            isActive: this.isActive
-          };
-          // create new publisher
-          if (this.createMode) {
-            await AppService.create("publisher", payload);
+          // update existing publisher
+          if (this.publisherId) {
+            Vue.delete(this.publisher, "id");
+            Vue.delete(this.publisher, "createdAt");
+            Vue.delete(this.publisher, "updatedAt");
+            Vue.delete(this.publisher, "__typename"); // TODO: dont send apollo query object directly
+            await this.$apollo.mutate({
+              mutation: UPDATE_PUBLISHER,
+              // Payload
+              variables: {
+                id: this.publisherId,
+                input: this.publisher
+              }
+            });
           } else {
-            await AppService.update(
-              "publisher",
-              this.$route.params.publisherId,
-              payload
-            );
+            // create new publisher
+            await this.$apollo.mutate({
+              mutation: SAVE_PUBLISHER,
+              // Payload
+              variables: {
+                input: this.publisher
+              }
+            });
           }
           this.isSubmitting = false;
           this.$router.push({ name: "publisher-list" });
@@ -107,8 +114,7 @@ export default {
       });
     },
     clear() {
-      this.publisherName = "";
-      this.isActive = false;
+      this.publisher = {};
       this.$validator.reset();
     }
   }

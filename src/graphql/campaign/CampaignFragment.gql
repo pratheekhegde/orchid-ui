@@ -1,0 +1,15 @@
+fragment Campaign on Campaign {
+  id
+  name
+  content {
+    id
+  }
+  publishers {
+    id
+  }
+  startDate
+  endDate
+  isActive
+  createdAt
+  updatedAt
+}

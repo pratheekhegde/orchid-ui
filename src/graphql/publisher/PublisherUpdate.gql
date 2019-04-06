@@ -1,0 +1,7 @@
+#import "./PublisherInputFragment.gql"
+
+mutation PublisherUpdate ($id: ID!, $input: UpdatePublisherInput!) {
+  updatePublisher (id: $id, input: $input) {
+   ...PublisherInput
+  }
+}

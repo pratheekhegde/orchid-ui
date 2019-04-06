@@ -1,27 +1,20 @@
 <template>
   <v-container fluid>
     <v-layout align-center justify-space-between>
-      <h2 class="headline">
-        {{ createMode ? "New Campaign" : "Edit Campaign" }}
-      </h2>
-      <v-btn
-        slot="activator"
-        :to="{ name: 'campaign-list' }"
-        color="primary"
-        dark
-      >
-        <v-icon left dark>arrow_back</v-icon> Back
+      <h2 class="headline">{{ campaignId ? "Edit Campaign" : "New Campaign" }}</h2>
+      <v-btn slot="activator" :to="{ name: 'campaign-list' }" color="primary" dark>
+        <v-icon left dark>arrow_back</v-icon>Back
       </v-btn>
     </v-layout>
     <v-layout mt-3>
       <v-flex>
-        <v-card>
+        <v-card v-if="!$apollo.queries.campaign.loading">
           <v-card-title>
             <v-flex>
               <form>
                 <v-text-field
                   v-validate="'required|max:100'"
-                  v-model="campaignName"
+                  v-model="campaign.name"
                   :counter="100"
                   :error-messages="errors.collect('campaignName')"
                   label="Campaign name"
@@ -30,24 +23,24 @@
                 ></v-text-field>
                 <v-autocomplete
                   v-validate="'required'"
-                  v-model="contentId"
+                  v-model="campaign.content"
                   :items="contents"
                   clearable
                   item-text="name"
-                  item-value="_id"
-                  :error-messages="errors.collect('contentId')"
+                  item-value="id"
+                  :error-messages="errors.collect('campaignId')"
                   label="Content name"
-                  data-vv-name="contentId"
+                  data-vv-name="campaignId"
                 />
                 <v-autocomplete
                   v-validate="'required'"
-                  v-model="publisherIds"
+                  v-model="campaign.publishers"
                   :items="publishers"
                   clearable
                   chips
                   multiple
                   item-text="name"
-                  item-value="_id"
+                  item-value="id"
                   :error-messages="errors.collect('publisherIds')"
                   label="Publishers"
                   data-vv-name="publisherIds"
@@ -57,7 +50,7 @@
                     <v-dialog
                       ref="campaignStartDateDialog"
                       v-model="campaignStartDateModal"
-                      :return-value.sync="campaignStartDate"
+                      :return-value.sync="campaign.startDate"
                       persistent
                       lazy
                       full-width
@@ -65,29 +58,23 @@
                     >
                       <v-text-field
                         slot="activator"
-                        v-model="campaignStartDate"
+                        v-model="campaign.startDate"
                         label="Campaign start date"
                         prepend-icon="event"
                         readonly
                       ></v-text-field>
-                      <v-date-picker v-model="campaignStartDate" scrollable>
+                      <v-date-picker v-model="campaign.startDate" scrollable>
                         <v-spacer></v-spacer>
-                        <v-btn
-                          flat
-                          color="primary"
-                          @click="campaignStartDateModal = false"
-                          >Cancel</v-btn
-                        >
+                        <v-btn flat color="primary" @click="campaignStartDateModal = false">Cancel</v-btn>
                         <v-btn
                           flat
                           color="primary"
                           @click="
                             $refs.campaignStartDateDialog.save(
-                              campaignStartDate
+                              campaign.startDate
                             )
                           "
-                          >OK</v-btn
-                        >
+                        >OK</v-btn>
                       </v-date-picker>
                     </v-dialog>
                   </v-flex>
@@ -95,7 +82,7 @@
                     <v-dialog
                       ref="campaignEndDateDialog"
                       v-model="campaignEndDateModal"
-                      :return-value.sync="campaignEndDate"
+                      :return-value.sync="campaign.endDate"
                       persistent
                       lazy
                       full-width
@@ -103,42 +90,34 @@
                     >
                       <v-text-field
                         slot="activator"
-                        v-model="campaignEndDate"
+                        v-model="campaign.endDate"
                         label="Campaign end date"
                         prepend-icon="event"
                         readonly
                       ></v-text-field>
-                      <v-date-picker v-model="campaignEndDate" scrollable>
+                      <v-date-picker v-model="campaign.endDate" scrollable>
                         <v-spacer></v-spacer>
-                        <v-btn
-                          flat
-                          color="primary"
-                          @click="campaignEndDateModal = false"
-                          >Cancel</v-btn
-                        >
+                        <v-btn flat color="primary" @click="campaignEndDateModal = false">Cancel</v-btn>
                         <v-btn
                           flat
                           color="primary"
                           @click="
-                            $refs.campaignEndDateDialog.save(campaignEndDate)
+                            $refs.campaignEndDateDialog.save(campaign.endDate)
                           "
-                          >OK</v-btn
-                        >
+                        >OK</v-btn>
                       </v-date-picker>
                     </v-dialog>
                   </v-flex>
                 </v-layout>
                 <v-checkbox
                   v-validate="'required'"
-                  v-model="isActive"
+                  v-model="campaign.isActive"
                   :error-messages="errors.collect('isActive')"
                   label="Active"
                   data-vv-name="isActive"
                   required
                 ></v-checkbox>
-                <v-btn @click="submit" :loading="isSubmitting" color="success"
-                  >submit</v-btn
-                >
+                <v-btn @click="submit" :loading="isSubmitting" color="success">submit</v-btn>
                 <v-btn @click="clear">clear</v-btn>
               </form>
             </v-flex>
@@ -149,29 +128,30 @@
   </v-container>
 </template>
 <script>
-import AppService from "@/services/appService";
+import Vue from "vue";
+import GET_CAMPAIGN from "@/graphql/campaign/Campaign.gql";
+import SAVE_CAMPAIGN from "@/graphql/campaign/CampaignSave.gql";
+import UPDATE_CAMPAIGN from "@/graphql/campaign/CampaignUpdate.gql";
+import GET_PUBLISHERS from "@/graphql/publisher/Publishers.gql";
+import GET_CONTENTS from "@/graphql/content/Contents.gql";
 
 export default {
+  props: {
+    campaignId: String
+  },
   data: () => ({
+    campaign: {},
     isSubmitting: false,
-    createMode: true,
     campaignStartDateModal: false,
     campaignEndDateModal: false,
-    campaignName: null,
-    contents: [],
     publishers: [],
-    contentId: null,
-    publisherIds: [],
-    campaignStartDate: new Date().toISOString().substr(0, 10),
-    campaignEndDate: new Date().toISOString().substr(0, 10),
-    isActive: true,
     dictionary: {
       custom: {
         campaignName: {
           required: () => "Campaign Name can not be empty.",
           max: "The Campaign name field may not be greater than 10 characters."
         },
-        contentId: {
+        campaignId: {
           required: () => "Content can not be empty."
         },
         publisherIds: {
@@ -180,47 +160,64 @@ export default {
       }
     }
   }),
-  async created() {
-    this.contents = await AppService.get("content");
-    this.publishers = await AppService.get("publisher");
-    this.createMode = Object.keys(this.$route.params).length === 0; // if there is no router param campaignId then its in create mode
-    if (!this.createMode) {
-      const campaign = await AppService.getOne(
-        "campaign",
-        this.$route.params.campaignId
-      );
-      this.campaignName = campaign.name;
-      this.isActive = campaign.isActive;
-      this.contentId = campaign.content;
-      this.publisherIds = campaign.publishers.map(p => p._id);
+  apollo: {
+    campaign: {
+      query: GET_CAMPAIGN,
+      variables() {
+        return {
+          id: this.campaignId
+        };
+      },
+      skip() {
+        return !this.campaignId;
+      }
+    },
+    publishers: {
+      query: GET_PUBLISHERS
+    },
+    contents: {
+      query: GET_CONTENTS
     }
   },
   mounted() {
     this.$validator.localize("en", this.dictionary);
   },
-
   methods: {
     submit() {
       this.$validator.validate().then(async result => {
         if (result) {
           this.isSubmitting = true;
-          const payload = {
-            name: this.campaignName,
-            content: this.contentId,
-            publishers: this.publisherIds,
-            campaignStartDate: this.campaignStartDate,
-            campaignEndDate: this.campaignEndDate,
-            isActive: this.isActive
+
+          // format date fields to graphql-iso
+          const dateFields = {
+            startDate: new Date(this.campaign.startDate).toISOString(),
+            endDate: new Date(this.campaign.endDate).toISOString()
           };
-          // create new campaign
-          if (this.createMode) {
-            await AppService.create("campaign", payload);
+
+          // update existing campaign
+          if (this.campaignId) {
+            Vue.delete(this.campaign, "id");
+            Vue.delete(this.campaign, "createdAt");
+            Vue.delete(this.campaign, "updatedAt");
+            Vue.delete(this.campaign, "__typename"); // TODO: dont send apollo query object directly
+            console.log;
+            await this.$apollo.mutate({
+              mutation: UPDATE_CAMPAIGN,
+              // Payload
+              variables: {
+                id: this.campaignId,
+                input: { ...this.campaign, ...dateFields }
+              }
+            });
           } else {
-            await AppService.update(
-              "campaign",
-              this.$route.params.campaignId,
-              payload
-            );
+            // create new campaign
+            await this.$apollo.mutate({
+              mutation: SAVE_CAMPAIGN,
+              // Payload
+              variables: {
+                input: { ...this.campaign, ...dateFields }
+              }
+            });
           }
           this.isSubmitting = false;
           this.$router.push({ name: "campaign-list" });
@@ -229,7 +226,7 @@ export default {
     },
     clear() {
       this.campaignName = null;
-      this.contentId = null;
+      this.campaignId = null;
       this.publisherIds = [];
       this.campaignStartDate = null;
       this.campaignEndDate = null;

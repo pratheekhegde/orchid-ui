@@ -2,12 +2,7 @@
   <v-container fluid>
     <v-layout align-center justify-space-between>
       <h2 class="headline">Publishers</h2>
-      <v-btn
-        slot="activator"
-        :to="{ name: 'publisher-add' }"
-        color="primary"
-        dark
-      >
+      <v-btn slot="activator" :to="{ name: 'publisher-add' }" color="primary" dark>
         <v-icon left dark>add</v-icon>New
       </v-btn>
     </v-layout>
@@ -24,35 +19,39 @@
               hide-details
             ></v-text-field>
           </v-card-title>
-          <v-data-table
-            :headers="headers"
-            :items="publishers"
-            :loading="isPublishersLoading"
-            :search="publisherSearchText"
+          <ApolloQuery
+            :query="require('@/graphql/publisher/Publishers.gql')"
+            fetch-policy="network-only"
           >
-            <template slot="items" slot-scope="props">
-              <td>{{ props.item.name }}</td>
-              <td class="text-xs-center" v-if="props.item.isActive">
-                <v-chip color="green" text-color="white">Active</v-chip>
-              </td>
-              <td class="text-xs-center" v-else>
-                <v-chip color="red" text-color="white">Inactive</v-chip>
-              </td>
-              <td>{{ props.item.updatedAt | fromNow }}</td>
-              <td>{{ props.item.createdAt | format }}</td>
-              <td class="text-xs-right">
-                <v-icon small class="mr-2" @click="editPublisher(props.item)">
-                  edit
-                </v-icon>
-                <v-icon small @click="showDeletePublisherPrompt(props.item)">
-                  delete
-                </v-icon>
-              </td>
+            <template slot-scope="{ result: { data, loading } }">
+              <v-data-table
+                v-if="data && data.publishers"
+                :headers="headers"
+                :items="data.publishers"
+                :loading="loading"
+                :search="publisherSearchText"
+              >
+                <template slot="items" slot-scope="props">
+                  <td>{{ props.item.name }}</td>
+                  <td class="text-xs-center" v-if="props.item.isActive">
+                    <v-chip color="green" text-color="white">Active</v-chip>
+                  </td>
+                  <td class="text-xs-center" v-else>
+                    <v-chip color="red" text-color="white">Inactive</v-chip>
+                  </td>
+                  <td>{{ props.item.updatedAt | fromNow }}</td>
+                  <td>{{ props.item.createdAt | format }}</td>
+                  <td class="text-xs-right">
+                    <v-icon small class="mr-2" @click="editPublisher(props.item)">edit</v-icon>
+                    <v-icon small @click="showDeletePublisherPrompt(props.item)">delete</v-icon>
+                  </td>
+                </template>
+                <template slot="no-data">
+                  <span class="justify-center">There is nothing to display.</span>
+                </template>
+              </v-data-table>
             </template>
-            <template slot="no-data">
-              <span class="justify-center">There is nothing to display.</span>
-            </template>
-          </v-data-table>
+          </ApolloQuery>
         </v-card>
       </v-flex>
     </v-layout>
@@ -60,26 +59,19 @@
       <v-dialog v-model="showPublisherDeleteDialog" persistent max-width="290">
         <v-card>
           <v-card-title class="headline">Delete Publisher?</v-card-title>
-          <v-card-text
-            >Are you sure you want to delete the publisher
-            <b>{{ publisherToBeDeleted ? publisherToBeDeleted.name : "" }}</b
-            >?</v-card-text
-          >
+          <v-card-text>
+            Are you sure you want to delete the publisher
+            <b>{{ publisherToBeDeleted ? publisherToBeDeleted.name : "" }}</b>?
+          </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn
-              color="green darken-1"
-              flat
-              @click="showPublisherDeleteDialog = false"
-              >Cancel</v-btn
-            >
+            <v-btn color="green darken-1" flat @click="showPublisherDeleteDialog = false">Cancel</v-btn>
             <v-btn
               color="red darken-1"
               flat
               @click="deletePublisher"
               :loading="isPublisherDeleting"
-              >Delete</v-btn
-            >
+            >Delete</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -87,13 +79,12 @@
   </v-container>
 </template>
 <script>
-import AppService from "@/services/appService";
-
+import DELETE_PUBLISHER from "@/graphql/publisher/PublisherDelete.gql";
+import GET_PUBLISHERS from "@/graphql/publisher/Publishers.gql";
 export default {
   data: () => ({
     publisherSearchText: "",
     showPublisherDeleteDialog: false,
-    isPublishersLoading: false,
     isPublisherDeleting: false,
     publisherToBeDeleted: null,
     headers: [
@@ -106,22 +97,13 @@ export default {
       { text: "Last Updated", value: "updatedAt", sortable: false },
       { text: "Created", value: "createdAt", sortable: false },
       { text: "Actions", value: "name", align: "right", sortable: false }
-    ],
-    publishers: []
+    ]
   }),
-  async created() {
-    this.fetchAllPublishers();
-  },
   methods: {
-    async fetchAllPublishers() {
-      this.isPublishersLoading = true;
-      this.publishers = await AppService.get("publisher");
-      this.isPublishersLoading = false;
-    },
     editPublisher(item) {
       this.$router.push({
         name: "publisher-edit",
-        params: { publisherId: item._id }
+        params: { publisherId: item.id }
       });
     },
     showDeletePublisherPrompt(item) {
@@ -130,9 +112,27 @@ export default {
     },
     async deletePublisher() {
       this.isPublisherDeleting = true;
-      await AppService.delete("publisher", this.publisherToBeDeleted._id);
+
+      await this.$apollo.mutate({
+        mutation: DELETE_PUBLISHER,
+        // Payload
+        variables: {
+          id: this.publisherToBeDeleted.id
+        },
+        update: store => {
+          let data = store.readQuery({ query: GET_PUBLISHERS });
+          // TODO this is a workaround
+          // See: https://github.com/apollographql/apollo-client/issues/4031#issuecomment-433668473
+          data = {
+            publishers: [...data.publishers]
+          };
+          const index = data.publishers.findIndex(p => p.id === p.id);
+          if (index !== -1) data.publishers.splice(index, 1);
+          store.writeQuery({ query: GET_PUBLISHERS, data });
+        }
+      });
+
       this.isPublisherDeleting = false;
-      this.fetchAllPublishers();
       this.showPublisherDeleteDialog = false;
     }
   }

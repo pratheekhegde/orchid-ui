@@ -1,7 +1,7 @@
-#import "./ContentInputFragment.gql"
+#import "./ContentFragment.gql"
 
 mutation ContentSave ($input: CreateContentInput!) {
   createContent (input: $input) {
-    ...ContentInput
+    ...Content
   }
 }

@@ -1,0 +1,7 @@
+#import "./PublisherFragment.gql"
+
+mutation PublisherSave ($input: CreatePublisherInput!) {
+  createPublisher (input: $input) {
+    ...Publisher
+  }
+}

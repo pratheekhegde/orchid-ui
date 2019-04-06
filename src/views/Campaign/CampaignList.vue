@@ -19,36 +19,40 @@
               hide-details
             ></v-text-field>
           </v-card-title>
-          <v-data-table
-            :headers="headers"
-            :items="contents"
-            :loading="isCampaignsLoading"
-            :search="campaignSearchText"
+          <ApolloQuery
+            :query="require('@/graphql/campaign/Campaigns.gql')"
+            fetch-policy="network-only"
           >
-            <template slot="items" slot-scope="props">
-              <td>{{ props.item.name }}</td>
-              <td>{{ props.item.content.name }}</td>
-              <td class="text-xs-center" v-if="props.item.isActive">
-                <v-chip color="green" text-color="white">Active</v-chip>
-              </td>
-              <td class="text-xs-center" v-else>
-                <v-chip color="red" text-color="white">Inactive</v-chip>
-              </td>
-              <td>{{ props.item.updatedAt | fromNow }}</td>
-              <td>{{ props.item.createdAt | format }}</td>
-              <td class="text-xs-right">
-                <v-icon small class="mr-2" @click="editCampaign(props.item)">
-                  edit
-                </v-icon>
-                <v-icon small @click="showDeleteCampaignPrompt(props.item)">
-                  delete
-                </v-icon>
-              </td>
+            <template slot-scope="{ result: { data, loading } }">
+              <v-data-table
+                v-if="data && data.campaigns"
+                :headers="headers"
+                :items="data.campaigns"
+                :loading="loading"
+                :search="campaignSearchText"
+              >
+                <template slot="items" slot-scope="props">
+                  <td>{{ props.item.name }}</td>
+                  <td>{{ props.item.content.name }}</td>
+                  <td class="text-xs-center" v-if="props.item.isActive">
+                    <v-chip color="green" text-color="white">Active</v-chip>
+                  </td>
+                  <td class="text-xs-center" v-else>
+                    <v-chip color="red" text-color="white">Inactive</v-chip>
+                  </td>
+                  <td>{{ props.item.updatedAt | fromNow }}</td>
+                  <td>{{ props.item.createdAt | format }}</td>
+                  <td class="text-xs-right">
+                    <v-icon small class="mr-2" @click="editCampaign(props.item)">edit</v-icon>
+                    <v-icon small @click="showDeleteCampaignPrompt(props.item)">delete</v-icon>
+                  </td>
+                </template>
+                <template slot="no-data">
+                  <span class="justify-center">There is nothing to display.</span>
+                </template>
+              </v-data-table>
             </template>
-            <template slot="no-data">
-              <span class="justify-center">There is nothing to display.</span>
-            </template>
-          </v-data-table>
+          </ApolloQuery>
         </v-card>
       </v-flex>
     </v-layout>
@@ -56,26 +60,19 @@
       <v-dialog v-model="showCampaignDeleteDialog" persistent max-width="290">
         <v-card>
           <v-card-title class="headline">Delete Campaign?</v-card-title>
-          <v-card-text
-            >Are you sure you want to delete the campaign
-            <b>{{ campaignToBeDeleted ? campaignToBeDeleted.name : "" }}</b
-            >?</v-card-text
-          >
+          <v-card-text>
+            Are you sure you want to delete the campaign
+            <b>{{ campaignToBeDeleted ? campaignToBeDeleted.name : "" }}</b>?
+          </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn
-              color="green darken-1"
-              flat
-              @click="showCampaignDeleteDialog = false"
-              >Cancel</v-btn
-            >
+            <v-btn color="green darken-1" flat @click="showCampaignDeleteDialog = false">Cancel</v-btn>
             <v-btn
               color="red darken-1"
               flat
               @click="deleteCampaign"
               :loading="isCampaignDeleting"
-              >Delete</v-btn
-            >
+            >Delete</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -83,13 +80,12 @@
   </v-container>
 </template>
 <script>
-import AppService from "@/services/appService";
-
+import DELETE_CAMPAIGN from "@/graphql/campaign/CampaignDelete.gql";
+import GET_CAMPAIGN from "@/graphql/campaign/Campaigns.gql";
 export default {
   data: () => ({
     campaignSearchText: "",
     showCampaignDeleteDialog: false,
-    isCampaignsLoading: false,
     isCampaignDeleting: false,
     campaignToBeDeleted: null,
     headers: [
@@ -109,21 +105,12 @@ export default {
       { text: "Created", value: "createdAt", sortable: false },
       { text: "Actions", value: "name", align: "right", sortable: false }
     ],
-    contents: []
   }),
-  created() {
-    this.fetchAllCampaigns();
-  },
   methods: {
-    async fetchAllCampaigns() {
-      this.isCampaignsLoading = true;
-      this.contents = await AppService.get("campaign");
-      this.isCampaignsLoading = false;
-    },
     editCampaign(item) {
       this.$router.push({
         name: "campaign-edit",
-        params: { campaignId: item._id }
+        params: { campaignId: item.id }
       });
     },
     showDeleteCampaignPrompt(item) {
@@ -132,9 +119,27 @@ export default {
     },
     async deleteCampaign() {
       this.isCampaignDeleting = true;
-      await AppService.delete("campaign", this.campaignToBeDeleted._id);
+
+      await this.$apollo.mutate({
+        mutation: DELETE_CAMPAIGN,
+        // Payload
+        variables: {
+          id: this.campaignToBeDeleted.id
+        },
+        update: store => {
+          let data = store.readQuery({ query: GET_CAMPAIGN });
+          // TODO this is a workaround
+          // See: https://github.com/apollographql/apollo-client/issues/4031#issuecomment-433668473
+          data = {
+            campaigns: [...data.campaigns]
+          };
+          const index = data.campaigns.findIndex(c => c.id === c.id);
+          if (index !== -1) data.campaigns.splice(index, 1);
+          store.writeQuery({ query: GET_CAMPAIGN, data });
+        }
+      });
+
       this.isCampaignDeleting = false;
-      this.fetchAllCampaigns();
       this.showCampaignDeleteDialog = false;
     }
   }

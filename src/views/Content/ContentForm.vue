@@ -100,6 +100,8 @@ export default {
           // update existing content
           if (this.contentId) {
             Vue.delete(this.content, "id");
+            Vue.delete(this.content, "createdAt");
+            Vue.delete(this.content, "updatedAt");
             Vue.delete(this.content, "__typename"); // TODO: dont send apollo query object directly
             await this.$apollo.mutate({
               mutation: UPDATE_CONTENT,

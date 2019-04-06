@@ -1,0 +1,10 @@
+fragment CampaignInput on Campaign {
+  name
+  content
+  publishers
+  startDate
+  endDate
+  isActive
+  createdAt
+  updatedAt
+}

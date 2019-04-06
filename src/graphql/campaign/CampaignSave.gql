@@ -1,0 +1,7 @@
+#import "./CampaignFragment.gql"
+
+mutation CampaignSave ($input: CreateCampaignInput!) {
+  createCampaign (input: $input) {
+    ...Campaign
+  }
+}

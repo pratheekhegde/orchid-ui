@@ -1,0 +1,7 @@
+#import "./CampaignFragment.gql"
+
+query GetCampaignById ($id: ID!){
+  campaign(id: $id) {
+    ...Campaign
+  }
+}

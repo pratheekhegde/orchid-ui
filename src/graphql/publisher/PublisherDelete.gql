@@ -1,0 +1,3 @@
+mutation PublisherDelete($id: ID!) {
+  deletePublisher (id: $id)
+}
